@@ -1,9 +1,9 @@
-import 'dart:io';
-
 import 'package:excel/excel.dart';
+import 'package:excelread/src/model/dataModel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:get/get.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,27 +14,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
+    return ResponsiveSizer(builder: (context, orientation, screenType) {
+      return GetMaterialApp(
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      );
+    });
   }
 }
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
+
   final String title;
 
   @override
@@ -42,8 +36,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
-
   @override
   initState() {
     readExcel();
@@ -53,51 +45,58 @@ class _MyHomePageState extends State<MyHomePage> {
 
   int _counter = 0;
 
-
   void _incrementCounter() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
       _counter++;
     });
   }
 
   void readExcel() async {
-    // var file = "assets/example.xlsx"; // Replace with the path to your Excel file
-
-//     ByteData data = await rootBundle.load("assets/example.xlsx");
-//     var byte = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-//     var excel = Excel.decodeBytes(byte);
-// var bytes = File(excel).readAsBytesSync();
-//     var excels = Excel.decodeBytes(bytes);
-//     for (var table in excel.tables.keys) {
-//       print(table); //sheet Name
-//       print(excels.tables[table]!.maxCols);
-//       print(excels.tables[table]!.maxRows);
-//       for (var row in excels.tables[table]!.rows) {
-//         print("$row");
-//       }
-//     }
-
     ByteData data = await rootBundle.load("assets/example.xlsx");
     var bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
     var excel = Excel.decodeBytes(bytes);
 
+
     for (var table in excel.tables.keys) {
-      print(table); //sheet Name
+      // print(excel.tables[table].); //sheet Name
       print(excel.tables[table]!.maxCols);
       print(excel.tables[table]!.maxRows);
-      for (var row in excel.tables[table]!.rows) {
-        print("$row");
+      // List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+      List<Data?> innerList = excel.tables[table]!.rows.isNotEmpty ? excel.tables[table]!.rows.first : [];
+      // Workbook workbook = Workbook();
+      // workbook.decode(bytes);
+
+      // List extractedValues = innerList
+      //     .map((data) => data)
+      //     .where((value) => value == 'customer' || value == 'name')
+      //     .toList();
+      // print("customer"+extractedValues.toString());
+      // print(excel.tables[table]!.rows[0]);
+      List<Data> dataModelList = [];
+      // List<String> filteredValues = innerList
+      //     .map((data) => data.toString())
+      //     .toList();
+      // print("filter"+filteredValues.toString());
+
+
+      for (var row in innerList) {
+        dataModelList.add(row!);
+        print(dataModelList.length);
+        // if(row)
+        // print("$row");
       }
+      List<String> names = extractNames(dataModelList);
+
     }
-// You can also copy it to the device when the app starts
-//     final directory = await getApplicationDocumentsDirectory();
-//     String filePath = join(directory, "Declaratieformulier.xlsx");
-//     await File(filePath).writeAsBytes(bytes);
+  }
+  List<String> extractNames(List<DataModel> dataList) {
+    List<String> names = [];
+
+    for (DataModel data in dataList) {
+      names.add(data.name);
+    }
+
+    return names;
   }
 
   @override
@@ -121,10 +120,12 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
+        onPressed: readExcel,
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ),
     );
   }
 }
+
+
